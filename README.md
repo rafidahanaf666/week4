@@ -1,10 +1,7 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/KuuIFSwK)
-# Weekly Coding #3 — Metro City Help Center
+# Weekly Coding #4 — Metro City Help Center
 
 ## Summary
-This homework uses one connected story to practice stack and queue behavior in Python.
-
-Metro City Help Center needs a small support system for recent staff actions, waiting citizens, request-note checks, and service-line processing.
+Metro City Help Center needs a small support system to track staff actions, serve waiting citizens, validate request notes, and process service lines. This week's work implements **stack** (LIFO) and **queue** (FIFO) behavior using Python's `list` and `collections.deque`.
 
 ## How to run
 ```bash
@@ -12,30 +9,31 @@ pytest -q
 ```
 
 ## Complexity
+
 ### `ActionStack.pop`
-- Time:
-- Why:
+- **Time: O(1)**
+- Why: `list.pop()` with no index removes from the end — no shifting needed.
 
 ### `RequestQueue.dequeue`
-- Time:
-- Why:
+- **Time: O(1)**
+- Why: `deque.popleft()` removes from the front in constant time. A plain `list` would be O(n) here, which is why `deque` is used.
 
 ### `is_note_balanced`
-- Time:
-- Why:
+- **Time: O(n)** where n = length of the note string
+- Why: Each character is visited exactly once; stack push/pop are O(1).
 
 ### `process_request_line`
-- Time:
-- Why:
+- **Time: O(n)** where n = number of citizens
+- Why: Each citizen is enqueued once and dequeued once — two O(1) operations per person.
 
 ## Edge-case checklist
-- [ ] empty action stack
-- [ ] empty request queue
-- [ ] empty string for `is_note_balanced`
-- [ ] note with no brackets
-- [ ] empty citizen list
+- [x] **Empty action stack** — `pop()` and `peek()` return `None`; `is_empty()` returns `True`
+- [x] **Empty request queue** — `dequeue()` and `peek()` return `None`; `is_empty()` returns `True`
+- [x] **Empty string for `is_note_balanced`** — the loop body never runs; the stack stays empty, so `True` is returned
+- [x] **Note with no brackets** — no characters match `([{` or `}])`, stack stays empty, returns `True`
+- [x] **Empty citizen list** — `process_request_line([])` returns `[]` immediately
 
 ## Assistance & sources
-- AI used? (Y/N):
-- What it helped with:
-- Other sources:
+- AI used? **Y**
+- What it helped with: code structure review and README formatting
+- Other sources: Python docs — [collections.deque](https://docs.python.org/3/library/collections.html#collections.deque)
