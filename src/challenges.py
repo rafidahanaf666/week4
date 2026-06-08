@@ -1,156 +1,92 @@
 from __future__ import annotations
-import pytest
-from challenges import (
-    ActionStack,
-    RequestQueue,
-    is_note_balanced,
-    process_request_line,
-    undo_recent_actions,
-)
+from collections import deque
 
 
-# ──────────────────────────────────────────
-# ActionStack tests
-# ──────────────────────────────────────────
+class ActionStack:
+    """Stack of recent help-center actions using a Python list (LIFO)."""
 
-def test_action_stack_push_and_peek():
-    stack = ActionStack()
-    stack.push("open_ticket")
-    assert stack.peek() == "open_ticket"
+    def __init__(self) -> None:
+        self._items: list[str] = []
 
+    def push(self, action: str) -> None:
+        """Add an action to the top of the stack."""
+        self._items.append(action)
 
-def test_action_stack_pop():
-    stack = ActionStack()
-    stack.push("open_ticket")
-    stack.push("assign_agent")
-    assert stack.pop() == "assign_agent"
-    assert stack.peek() == "open_ticket"
+    def pop(self) -> str | None:
+        """Remove and return the top action, or None if the stack is empty."""
+        if self.is_empty():
+            return None
+        return self._items.pop()
 
+    def peek(self) -> str | None:
+        """Return the top action without removing it, or None if empty."""
+        if self.is_empty():
+            return None
+        return self._items[-1]
 
-def test_action_stack_pop_empty():
-    stack = ActionStack()
-    assert stack.pop() is None
-
-
-def test_action_stack_peek_empty():
-    stack = ActionStack()
-    assert stack.peek() is None
-
-
-def test_action_stack_is_empty():
-    stack = ActionStack()
-    assert stack.is_empty() is True
-    stack.push("action")
-    assert stack.is_empty() is False
+    def is_empty(self) -> bool:
+        """Return True if the stack has no actions."""
+        return len(self._items) == 0
 
 
-# ──────────────────────────────────────────
-# RequestQueue tests
-# ──────────────────────────────────────────
+class RequestQueue:
+    """Queue of waiting citizens using collections.deque (FIFO)."""
 
-def test_request_queue_enqueue_and_peek():
-    queue = RequestQueue()
-    queue.enqueue("Alice")
-    assert queue.peek() == "Alice"
+    def __init__(self) -> None:
+        self._items: deque[str] = deque()
 
+    def enqueue(self, name: str) -> None:
+        """Add a citizen name to the back of the queue."""
+        self._items.append(name)
 
-def test_request_queue_dequeue_order():
-    queue = RequestQueue()
-    queue.enqueue("Alice")
-    queue.enqueue("Bob")
-    assert queue.dequeue() == "Alice"
-    assert queue.dequeue() == "Bob"
+    def dequeue(self) -> str | None:
+        """Remove and return the front citizen, or None if the queue is empty."""
+        if self.is_empty():
+            return None
+        return self._items.popleft()
 
+    def peek(self) -> str | None:
+        """Return the front citizen without removing it, or None if empty."""
+        if self.is_empty():
+            return None
+        return self._items[0]
 
-def test_request_queue_dequeue_empty():
-    queue = RequestQueue()
-    assert queue.dequeue() is None
-
-
-def test_request_queue_peek_empty():
-    queue = RequestQueue()
-    assert queue.peek() is None
-
-
-def test_request_queue_is_empty():
-    queue = RequestQueue()
-    assert queue.is_empty() is True
-    queue.enqueue("Charlie")
-    assert queue.is_empty() is False
+    def is_empty(self) -> bool:
+        """Return True if the queue has no waiting citizens."""
+        return len(self._items) == 0
 
 
-# ──────────────────────────────────────────
-# is_note_balanced tests
-# ──────────────────────────────────────────
+def is_note_balanced(note: str) -> bool:
+    """Return True if all bracket pairs () [] {} are balanced correctly."""
+    stack: list[str] = []
+    pairs: dict[str, str] = {')': '(', ']': '[', '}': '{'}
 
-def test_balanced_parentheses():
-    assert is_note_balanced("(hello)") is True
+    for ch in note:
+        if ch in "([{":
+            stack.append(ch)
+        elif ch in ")]}":
+            if not stack or stack[-1] != pairs[ch]:
+                return False
+            stack.pop()
 
-
-def test_balanced_mixed():
-    assert is_note_balanced("{[()]}") is True
-
-
-def test_unbalanced_missing_close():
-    assert is_note_balanced("(hello") is False
-
-
-def test_unbalanced_wrong_order():
-    assert is_note_balanced("([)]") is False
+    return len(stack) == 0
 
 
-def test_balanced_empty_string():
-    assert is_note_balanced("") is True
+def process_request_line(citizens: list[str]) -> list[str]:
+    """Return citizens in the order they are served (FIFO)."""
+    queue: deque[str] = deque(citizens)
+    result: list[str] = []
+
+    while queue:
+        result.append(queue.popleft())
+
+    return result
 
 
-def test_unbalanced_extra_close():
-    assert is_note_balanced("())") is False
-
-
-# ──────────────────────────────────────────
-# process_request_line tests
-# ──────────────────────────────────────────
-
-def test_process_request_line_order():
-    result = process_request_line(["Alice", "Bob", "Charlie"])
-    assert result == ["Alice", "Bob", "Charlie"]
-
-
-def test_process_request_line_empty():
-    assert process_request_line([]) == []
-
-
-def test_process_request_line_single():
-    assert process_request_line(["Alice"]) == ["Alice"]
-
-
-# ──────────────────────────────────────────
-# undo_recent_actions tests
-# ──────────────────────────────────────────
-
-def test_undo_recent_actions_basic():
-    actions = ["open", "assign", "close"]
-    result = undo_recent_actions(actions, 1)
-    assert result == ["open", "assign"]
-
-
-def test_undo_recent_actions_all():
-    actions = ["open", "assign"]
-    result = undo_recent_actions(actions, 2)
-    assert result == []
-
-
-def test_undo_recent_actions_more_than_available():
-    actions = ["open"]
-    result = undo_recent_actions(actions, 5)
-    assert result == []
-
-
-def test_undo_recent_actions_zero():
-    actions = ["open", "assign", "close"]
-    result = undo_recent_actions(actions, 0)
-    assert result == ["open", "assign", "close"]
-
-
-def test_undo_recent_actions_empty():
-    assert undo_recent_actions([], 3) == []
+def undo_recent_actions(actions: list[str], undo_count: int) -> list[str]:
+    """Remove the most recent undo_count actions and return the rest."""
+    stack = list(actions)
+    for _ in range(undo_count):
+        if stack:
+            stack.pop()
+    return stack
